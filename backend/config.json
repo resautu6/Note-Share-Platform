@@ -1,0 +1,9 @@
+{
+    "Ipaddr": "127.0.0.1",
+    "Port": 8081,
+    "Secret_Key": "123",
+    "DataBase_host": "localhost",
+    "DataBase_port": 3306,
+    "DataBase_name": "root",
+    "DataBase_password": "123"
+}
