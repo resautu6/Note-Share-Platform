@@ -4,6 +4,7 @@
     "Secret_Key": "123",
     "DataBase_host": "localhost",
     "DataBase_port": 3306,
-    "DataBase_name": "root",
-    "DataBase_password": "123"
+    "DataBase_uname": "root",
+    "DataBase_password": "123",
+    "DataBase_name": "nsptest"
 }

@@ -15,8 +15,9 @@ type config struct {
 	SecretKey string `json:"Secret_Key"`
     DataBase_host string `json:"DataBase_host"`
     DataBase_port int `json:"DataBase_port"`
-    DataBase_name string `json:"DataBase_name"`
+    DataBase_uname string `json:"DataBase_uname"`
     DataBase_password string `json:"DataBase_password"`
+	DataBase_name string `json:"DataBase_name"`
 }
 
 var(
