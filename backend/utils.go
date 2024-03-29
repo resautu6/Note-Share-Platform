@@ -43,14 +43,15 @@ func loadConfigFile(path string) {
     
 }
 
-func generateJWT(username string) (string, error) {
+func generateJWT(uid int, username string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"uid" : 	uid,
 		"username": username,
 		"exp":      time.Now().Add(time.Hour * 24).Unix(), // set duration=24h
 	})
 
 	// signature token with secret key
-	tokenString, err := token.SignedString([]byte("your_secret_key"))
+	tokenString, err := token.SignedString([]byte(Config.SecretKey))
 	if err != nil {
 		return "", err
 	}
