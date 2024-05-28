@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"strconv"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 	mysql "gorm.io/driver/mysql"
@@ -46,7 +48,7 @@ func (db *DataBase) connect() {
 }
 
 func (db *DataBase) close() {
-
+	
 }
 
 func (db *DataBase) addUser(user User) {
@@ -79,3 +81,52 @@ func (db *DataBase) getUserByNameAndPassword(name string, password string) User 
 	}
 	return user
 }
+
+func (db *DataBase) addArticle(aritcle Article) {
+	db.db.Create(&aritcle)
+
+	articlePath := "res/" + strconv.FormatInt(int64(aritcle.ArticleUid), 10) + "_" +  strconv.FormatInt(int64(aritcle.ArticleId), 16)
+	err := os.Mkdir(articlePath, 0755)
+	if err != nil {
+		log.Error("Create article directory failed: ", err)
+	}
+
+	db.db.Where("article_id = ?", aritcle.ArticleId).Update("image_path", articlePath)
+}
+
+func (db *DataBase) getArticleById(id int) Article {
+	var article Article
+	err := db.db.First(&article, id).Error
+	if err != nil {
+		log.Warn(err)
+	}
+	return article
+}
+
+func (db *DataBase) getArticleByUid(uid int) []Article {
+	var articles []Article
+	err := db.db.Where("uid = ?", uid).Find(&articles).Error
+	if err != nil {
+		log.Warn(err)
+	}
+	return articles
+}
+
+func (db *DataBase) getArticleByTitle(title string) []Article {
+	var articles []Article
+	err := db.db.Where("title = ?", title).Find(&articles).Error
+	if err != nil {
+		log.Warn(err)
+	}
+	return articles
+}
+
+func (db *DataBase) getArticleByContent(content string) []Article {
+	var articles []Article
+	err := db.db.Where("content = ?", content).Find(&articles).Error
+	if err != nil {
+		log.Warn(err)
+	}
+	return articles
+}
+

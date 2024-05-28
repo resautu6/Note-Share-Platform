@@ -16,12 +16,15 @@ type Server struct {
 	router         *gin.Engine
 	usersMap       map[string]User
 	usersMapRWLock sync.RWMutex
+
+	ArticleCache articleCache
 }
 
 func (s *Server) registerRouter() {
 	s.handleRootGet()
 	s.handleLoginPost()
 	s.handleRegisterPost()
+	s.handleGetArticleContent()
 }
 
 func (s *Server) registerMiddleware() {
@@ -102,6 +105,22 @@ func (s *Server) handleRegisterPost() {
 		})
 	})
 }
+
+func (s *Server) handleUploadArticle() {
+	s.router.POST("/upload_article", func(c *gin.Context)) {
+
+	}
+}
+
+func (s *Server) handleGetArticleContent() {
+	s.router.GET("/article/:id", func(c *gin.Context) {
+		if ArticleCache.hasArticle(c.Param("id")) {
+	}
+
+}
+
+
+
 
 func authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
