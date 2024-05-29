@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -17,7 +18,7 @@ type Server struct {
 	usersMap       map[string]User
 	usersMapRWLock sync.RWMutex
 
-	ArticleCache articleCache
+	articleCache ArticleCache 
 }
 
 func (s *Server) registerRouter() {
@@ -80,6 +81,8 @@ func (s *Server) handleLoginPost() {
 
 		c.JSON(200, gin.H{
 			"message": "Login success",
+			"uname": user.UName,
+			"token": "123",
 		})
 	})
 }
@@ -107,19 +110,71 @@ func (s *Server) handleRegisterPost() {
 }
 
 func (s *Server) handleUploadArticle() {
-	s.router.POST("/upload_article", func(c *gin.Context)) {
-
-	}
+	s.router.POST("/upload_article", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "发布成功！",
+		})
+	})
 }
+
+
 
 func (s *Server) handleGetArticleContent() {
-	s.router.GET("/article/:id", func(c *gin.Context) {
-		if ArticleCache.hasArticle(c.Param("id")) {
-	}
+	s.router.GET("article/list", func(c *gin.Context) {
+		articles := db.getArticles()
+		c.JSON(200, gin.H{
+			"item_sum" : 0,
+			"items": articles,
+		})
+	})
 
+	s.router.GET("/article/:id", func(c *gin.Context) {
+		var article Article
+		article_id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(403, gin.H{
+				"message" : "Wrong article id!",
+			})
+			c.Status(403)
+			return
+		}
+ 		if s.articleCache.hasContent(c.Param("id")) {
+			article = s.articleCache.getContent(c.Param("id")).(Article)
+		} else {
+			article = db.getArticleById(article_id)
+		}
+
+		c.JSON(200, gin.H{
+			"id": article.ArticleId,
+			"title": article.ArticleTitle,
+			"uname": article.ArticleUid,
+			"image_num": article.ArticleImageNum,
+			"image_path": article.ArticleImagePath,
+			"view_num": article.ArticleViewNum,
+		})
+	})
+
+	s.router.GET("/article/:id/content", func(c *gin.Context) {
+		if s.articleCache.hasContent(c.Param("id")) {
+
+		}
+
+		c.JSON(200, gin.H{
+			"id" : c.Param("id"),
+			"content": "This is a test content",
+			"image_path": "/",
+		})
+	})
 }
 
-
+func (s *Server) handleGetUserInform() {
+	s.router.GET("/user/favourites/:id", func(c *gin.Context) {
+		user := db.getUserById(c.Param("id"))
+		c.JSON(200, gin.H{
+			"user": user,
+		})
+	})
+}
 
 
 func authMiddleware() gin.HandlerFunc {

@@ -5,15 +5,20 @@ import (
 )
 
 type Cache struct {
-	cache map[int]interface{}
+	cache map[string]interface{}
 
 }
 
-func (cch *Cache) getContent(key int) interface{}{
+func (cch *Cache) hasContent(key string) bool {
+	_, ok := cch.cache[key]
+	return ok
+}
+
+func (cch *Cache) getContent(key string) interface{}{
 	return cch.cache[key]
 }
 
-func (cch *Cache) setContent(key int, value interface{}) {
+func (cch *Cache) setContent(key string, value interface{}) {
 	cch.cache[key] = value
 }
 

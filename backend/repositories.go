@@ -94,6 +94,15 @@ func (db *DataBase) addArticle(aritcle Article) {
 	db.db.Where("article_id = ?", aritcle.ArticleId).Update("image_path", articlePath)
 }
 
+func (db *DataBase) getArticles() []Article {
+	var articles []Article
+	err := db.db.Find(&articles).Error
+	if err != nil {
+		log.Warn(err)
+	}
+	return articles
+}
+
 func (db *DataBase) getArticleById(id int) Article {
 	var article Article
 	err := db.db.First(&article, id).Error
