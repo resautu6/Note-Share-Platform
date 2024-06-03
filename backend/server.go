@@ -227,14 +227,29 @@ func (s *Server) handleGetArticleContent() {
 		})
 	})
 
+	s.router.GET("/search/article/:word", func(c *gin.Context) {
+		articles := db.getArticleByTitleAndContent(c.Param("word"), 16)
+		article_ids := make([]int, 0)
+		for _, article := range articles {
+			article_ids = append(article_ids, article.ArticleId)
+		}
+
+		c.JSON(200, gin.H{
+			"item_sum" : len(article_ids),
+			"items": article_ids,
+		})
+	})
+
 	s.router.GET("/article/:id/content", func(c *gin.Context) {
 		var article Article
+		articleID, _ := strconv.Atoi(c.Param("id"))
 		if s.articleCache.hasContent(c.Param("id")) {
 			article = s.articleCache.getContent(c.Param("id")).(Article)
 		} else {
-			articleID, _ := strconv.Atoi(c.Param("id"))
 			article = db.getArticleById(articleID)
 		}
+
+		db.updateViewNumByAid(articleID)
 
 		c.JSON(200, gin.H{
 			"id" : c.Param("id"),

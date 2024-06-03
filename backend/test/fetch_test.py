@@ -46,9 +46,13 @@ def get_user_article_test():
     print(response.status_code)
     print(response.json())
 
-
+def search_artitle():
+    response = requests.get(url + "search/article/hello")
+    print(response.status_code)
+    print(response.json())
 
 if __name__ == "__main__" :
-    get_user_article_test()
+    # get_user_article_test()
     # get_specific_test()
     # random_test()
+    search_artitle()

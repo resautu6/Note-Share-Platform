@@ -141,9 +141,20 @@ func (db *DataBase) getArticlesByUid(uid int) []Article {
 	return articles
 }
 
+func (db* DataBase) updateViewNumByAid(aid int) {
+	var article Article
+	article.ArticleId = aid
+	result := db.db.Table("articles").Where("article_id = ?", aid).Update("view_num", gorm.Expr("view_num + ?", 1))
+
+	if result.Error != nil {
+		log.Warn(result)
+	}
+}
+
 func (db *DataBase) getArticleByTitle(title string) []Article {
 	var articles []Article
-	err := db.db.Where("title = ?", title).Find(&articles).Error
+	err := db.db.Table("articles").Where("MATCH(title) AGAINST(?)", title).Find(&articles).Error
+
 	if err != nil {
 		log.Warn(err)
 	}
@@ -152,11 +163,25 @@ func (db *DataBase) getArticleByTitle(title string) []Article {
 
 func (db *DataBase) getArticleByContent(content string) []Article {
 	var articles []Article
-	err := db.db.Where("content = ?", content).Find(&articles).Error
+	err := db.db.Table("articles").Where("MATCH(content) AGAINST(?)", content).Find(&articles).Error
 	if err != nil {
 		log.Warn(err)
 	}
 	return articles
+}
+
+func (db *DataBase) getArticleByTitleAndContent(content string, lmt int) []Article {
+	var articles []Article
+	if lmt == 0 {
+		lmt = 114514
+	}
+
+	err := db.db.Table("articles").Where("MATCH(title, content) AGAINST(?)", content).Find(&articles).Limit(lmt).Error
+	if err != nil {
+		log.Warn(err)
+	}
+	return articles
+
 }
 
 func (db *DataBase) addFavorite(favourite Favourite) {
