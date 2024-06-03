@@ -302,6 +302,19 @@ func (s *Server) handleGetUserInform() {
 
 	})
 
+	s.router.GET("/user/uname/:id", func(c *gin.Context){
+		uid, _ := strconv.Atoi(c.Param("id"))
+		user := db.getUserById(uid)
+
+		if user.Uid != uid {
+			c.JSON(403, gin.H{"message": "User not found",})
+			return
+		}
+		c.JSON(200, gin.H{
+			"uname": user.UName,
+		})
+	})
+
 	s.router.GET("/user/article", authMiddleware(), func(c *gin.Context) {
 		claimsInterface, exist := c.Get("user")
 		if !exist {
