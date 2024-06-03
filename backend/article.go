@@ -3,10 +3,10 @@ package main
 import (
 	"time"
 	"strconv"
-	"os"
+	// "os"
 
 	gorm "gorm.io/gorm"
-	log "github.com/sirupsen/logrus"
+	// log "github.com/sirupsen/logrus"
 )
 
 type Article struct {
@@ -14,7 +14,7 @@ type Article struct {
 	ArticleTitle string `gorm:"column:title;type:varchar(32);not null;index"`
 	ArticleUid int `gorm:"column:uid;type:int;not null;index"`
 	ArticleContent string `gorm:"column:content;type:varchar(8196);not null;index"`
-	ArticleModifyTime string `gorm:"column:modify_time;type:TIMESTAMP;not null;index"`
+	ArticleModifyTime time.Time `gorm:"column:modify_time;type:TIMESTAMP;not null;index"`
 	ArticleImagePath string `gorm:"column:image_path;type:varchar(64);not null;"`
 	ArticleImageNum int `gorm:"column:image_num;type:int;not null;"`
 	ArticleViewNum int `gorm:"column:view_num;type:int;not null;"`
@@ -31,14 +31,10 @@ func makeArticle(title string, content string, uid int, imageNum int, viewNum in
 		ArticleTitle: title,
 		ArticleUid: uid,
 		ArticleContent: content,
+		ArticleModifyTime: time.Now(),
 		ArticleImagePath: articlePath,
 		ArticleImageNum: imageNum,
 		ArticleViewNum: viewNum,
-	}
-
-	err := os.Mkdir(articlePath, 0755)
-	if err != nil {
-		log.Error("Create article directory failed: ", err)
 	}
 
 	return ret

@@ -82,21 +82,36 @@ func (db *DataBase) getUserByNameAndPassword(name string, password string) User 
 	return user
 }
 
-func (db *DataBase) addArticle(aritcle Article) {
-	db.db.Create(&aritcle)
+func (db *DataBase) addArticle(aritcle Article) Article {
+	result := db.db.Create(&aritcle)
+
+	if result.Error != nil {
+		aritcle.ArticleImagePath = "error"
+		return aritcle
+	}
 
 	articlePath := "res/" + strconv.FormatInt(int64(aritcle.ArticleUid), 10) + "_" +  strconv.FormatInt(int64(aritcle.ArticleId), 16)
 	err := os.Mkdir(articlePath, 0755)
 	if err != nil {
 		log.Error("Create article directory failed: ", err)
 	}
+	aritcle.ArticleImagePath = articlePath
+	result = db.db.Model(&aritcle).Update("image_path", articlePath)
+	// result = db.db.Where("article_id = ?", aritcle.ArticleId).Update("image_path", articlePath)
+	if result.Error != nil {
+		aritcle.ArticleImagePath = "error"
+		return aritcle
+	}
 
-	db.db.Where("article_id = ?", aritcle.ArticleId).Update("image_path", articlePath)
+	return aritcle
 }
 
-func (db *DataBase) getArticles() []Article {
+func (db *DataBase) getArticles(lmt int) []Article {
+	if lmt == 0 {
+		lmt = 16
+	}
 	var articles []Article
-	err := db.db.Find(&articles).Error
+	err := db.db.Find(&articles).Limit(lmt).Error
 	if err != nil {
 		log.Warn(err)
 	}
@@ -108,11 +123,16 @@ func (db *DataBase) getArticleById(id int) Article {
 	err := db.db.First(&article, id).Error
 	if err != nil {
 		log.Warn(err)
+		article.ArticleId = -1
 	}
 	return article
 }
 
-func (db *DataBase) getArticleByUid(uid int) []Article {
+func (db *DataBase) deleteArticleById(id int) {
+	db.db.Delete(&Article{}, id)
+}
+
+func (db *DataBase) getArticlesByUid(uid int) []Article {
 	var articles []Article
 	err := db.db.Where("uid = ?", uid).Find(&articles).Error
 	if err != nil {
@@ -137,5 +157,36 @@ func (db *DataBase) getArticleByContent(content string) []Article {
 		log.Warn(err)
 	}
 	return articles
+}
+
+func (db *DataBase) addFavorite(favourite Favourite) {
+	db.db.Create(&favourite)
+}
+
+func (db *DataBase) getFavouritesByUid(uid int) []Favourite {
+	var favourites []Favourite
+	err := db.db.Where("uid = ?", uid).Find(&favourites).Error
+	if err != nil {
+		log.Warn(err)
+	}
+	return favourites
+}
+
+func (db *DataBase) getFavouritesByFid(fid int) []Favourite {
+	var favourites []Favourite
+	err := db.db.Where("favourite_id = ?", fid).Find(&favourites).Error
+	if err != nil {
+		log.Warn(err)
+	}
+	return favourites
+}
+
+func (db *DataBase) getFavouritesByUidAndAid(uid int, aid int) []Favourite {
+	var favourites []Favourite
+	err := db.db.Where("uid = ? AND article_id = ?", uid, aid).Find(&favourites).Error
+	if err != nil {
+		log.Warn(err)
+	}
+	return favourites
 }
 

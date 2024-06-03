@@ -1,8 +1,8 @@
 package main
 
-import (
-	log "github.com/sirupsen/logrus"
-)
+// import (
+// 	log "github.com/sirupsen/logrus"
+// )
 
 type Cache struct {
 	cache map[string]interface{}
@@ -28,7 +28,7 @@ type ArticleCache struct {
 }
 
 func (artch *ArticleCache) init() {
-	artch.cache = make(map[int]interface{})
+	artch.cache = make(map[string]interface{})
 }
 
 type UserCache struct {

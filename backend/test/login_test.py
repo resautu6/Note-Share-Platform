@@ -19,7 +19,8 @@ testcases = [testcase1, testcase2, testcase3]
 
 def test():
     for i, testcase in enumerate(testcases):
-        response = requests.post("http://resautu.cn:7879/login", data=testcase)
+        # response = requests.post("http://resautu.cn:7879/login", data=testcase)
+        response = requests.post("http://127.0.0.1:8081/login", data=testcase)
         print(f"testcase {i + 1}: {response.json()}")
 
 if __name__ == '__main__':
