@@ -21,7 +21,7 @@ type Server struct {
 	usersMap       map[string]User
 	usersMapRWLock sync.RWMutex
 
-	articleCache ArticleCache 
+	articleCache ArticleCache
 }
 
 func (s *Server) registerRouter() {
@@ -90,8 +90,8 @@ func (s *Server) handleLoginPost() {
 
 		c.JSON(200, gin.H{
 			"message": "Login success",
-			"uname": user.UName,
-			"token": jwtToken,
+			"uname":   user.UName,
+			"token":   jwtToken,
 		})
 	})
 }
@@ -123,7 +123,7 @@ func (s *Server) handleUploadArticle() {
 
 		claimsInterface, exist := c.Get("user")
 		if !exist {
-			c.JSON(403, gin.H{"message": "Token not found",})
+			c.JSON(403, gin.H{"message": "Token not found"})
 			return
 		}
 		claims := claimsInterface.(jwt.MapClaims)
@@ -135,14 +135,14 @@ func (s *Server) handleUploadArticle() {
 		imgPath := article.ArticleImagePath
 
 		if imgPath == "error" {
-			c.JSON(403, gin.H{"message": "文章上传失败",})
+			c.JSON(403, gin.H{"message": "文章上传失败"})
 			db.deleteArticleById(article.ArticleId)
 			return
 		}
 
 		form, err := c.MultipartForm()
 		if err != nil {
-			c.JSON(403, gin.H{"message": "图片上传失败",})
+			c.JSON(403, gin.H{"message": "图片上传失败"})
 			db.deleteArticleById(article.ArticleId)
 			return
 		}
@@ -165,7 +165,7 @@ func (s *Server) handleUploadArticle() {
 
 			// 创建文件并保存到res目录
 			fileName := strconv.Itoa(idx)
-			dst := filepath.Join(imgPath, fileName + ".png")
+			dst := filepath.Join(imgPath, fileName+".png")
 			err = os.WriteFile(dst, fileBytes, 0644)
 			if err != nil {
 				c.String(http.StatusBadRequest, "file write err: %s", err.Error())
@@ -179,8 +179,6 @@ func (s *Server) handleUploadArticle() {
 	})
 }
 
-
-
 func (s *Server) handleGetArticleContent() {
 	s.router.GET("article/list", func(c *gin.Context) {
 		articles := db.getArticles(8)
@@ -189,8 +187,8 @@ func (s *Server) handleGetArticleContent() {
 			article_ids = append(article_ids, article.ArticleId)
 		}
 		c.JSON(200, gin.H{
-			"item_sum" : len(article_ids),
-			"items": article_ids,
+			"item_sum": len(article_ids),
+			"items":    article_ids,
 		})
 	})
 
@@ -199,31 +197,31 @@ func (s *Server) handleGetArticleContent() {
 		article_id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(403, gin.H{
-				"message" : "Wrong article id!",
+				"message": "Wrong article id!",
 			})
 			c.Status(403)
 			return
 		}
- 		if s.articleCache.hasContent(c.Param("id")) {
+		if s.articleCache.hasContent(c.Param("id")) {
 			article = s.articleCache.getContent(c.Param("id")).(Article)
 		} else {
 			article = db.getArticleById(article_id)
 		}
 
-		if (article.ArticleId == 0) {
+		if article.ArticleId == 0 {
 			c.JSON(403, gin.H{
-				"message" : "Article not found!",
+				"message": "Article not found!",
 			})
 			return
 		}
 
 		c.JSON(200, gin.H{
-			"id": article.ArticleId,
-			"title": article.ArticleTitle,
-			"uname": article.ArticleUid,
-			"image_num": article.ArticleImageNum,
+			"id":         article.ArticleId,
+			"title":      article.ArticleTitle,
+			"uname":      article.ArticleUid,
+			"image_num":  article.ArticleImageNum,
 			"image_path": article.ArticleImagePath,
-			"view_num": article.ArticleViewNum,
+			"view_num":   article.ArticleViewNum,
 		})
 	})
 
@@ -235,8 +233,8 @@ func (s *Server) handleGetArticleContent() {
 		}
 
 		c.JSON(200, gin.H{
-			"item_sum" : len(article_ids),
-			"items": article_ids,
+			"item_sum": len(article_ids),
+			"items":    article_ids,
 		})
 	})
 
@@ -252,8 +250,8 @@ func (s *Server) handleGetArticleContent() {
 		db.updateViewNumByAid(articleID)
 
 		c.JSON(200, gin.H{
-			"id" : c.Param("id"),
-			"content": article.ArticleContent,
+			"id":         c.Param("id"),
+			"content":    article.ArticleContent,
 			"image_path": article.ArticleImagePath,
 		})
 	})
@@ -263,7 +261,7 @@ func (s *Server) handleGetUserInform() {
 	s.router.GET("/user/favourites", authMiddleware(), func(c *gin.Context) {
 		claimsInterface, exist := c.Get("user")
 		if !exist {
-			c.JSON(403, gin.H{"message": "Token not found",})
+			c.JSON(403, gin.H{"message": "Token not found"})
 			return
 		}
 		claims := claimsInterface.(jwt.MapClaims)
@@ -276,36 +274,50 @@ func (s *Server) handleGetUserInform() {
 		}
 
 		c.JSON(200, gin.H{
-			"item_sum" : len(favourites_ids),
-			"items": favourites_ids,
+			"item_sum": len(favourites_ids),
+			"items":    favourites_ids,
 		})
 	})
 
 	s.router.POST("/user/favourites", authMiddleware(), func(c *gin.Context) {
 		claimsInterface, exist := c.Get("user")
 		if !exist {
-			c.JSON(403, gin.H{"message": "Token not found",})
+			c.JSON(403, gin.H{"message": "Token not found"})
 			return
 		}
 		claims := claimsInterface.(jwt.MapClaims)
 		uid := int(claims["uid"].(float64))
 
 		article_id, err := strconv.Atoi(c.PostForm("article_id"))
-		if err != nil {
-			c.JSON(403, gin.H{"message": "Wrong article id",})
+		command := c.PostForm("command")
+		if command == "" {
+			c.JSON(403, gin.H{"message": "Command not found"})
 			return
 		}
-		
+		if err != nil {
+			c.JSON(403, gin.H{"message": "Wrong article id"})
+			return
+		}
+
+		if command == "delete" {
+			db.deleteFavouriteByAidAndUid(article_id, uid)
+			c.JSON(200, gin.H{"message": "Delete favourite success"})
+			return
+		} else if command != "add" {
+			c.JSON(403, gin.H{"message": "Command not found"})
+			return
+		}
+
 		article := db.getArticleById(article_id)
 
 		if article.ArticleId == -1 {
-			c.JSON(403, gin.H{"message": "Article not found",})
+			c.JSON(403, gin.H{"message": "Article not found"})
 			return
 		}
 
 		testList := db.getFavouritesByUidAndAid(uid, article_id)
 		if len(testList) != 0 {
-			c.JSON(403, gin.H{"message": "Article already in favourite list",})
+			c.JSON(403, gin.H{"message": "Article already in favourite list"})
 			return
 		}
 
@@ -314,15 +326,14 @@ func (s *Server) handleGetUserInform() {
 
 		c.JSON(200, gin.H{"message": "Add favourite success"})
 
-
 	})
 
-	s.router.GET("/user/uname/:id", func(c *gin.Context){
+	s.router.GET("/user/uname/:id", func(c *gin.Context) {
 		uid, _ := strconv.Atoi(c.Param("id"))
 		user := db.getUserById(uid)
 
 		if user.Uid != uid {
-			c.JSON(403, gin.H{"message": "User not found",})
+			c.JSON(403, gin.H{"message": "User not found"})
 			return
 		}
 		c.JSON(200, gin.H{
@@ -333,7 +344,7 @@ func (s *Server) handleGetUserInform() {
 	s.router.GET("/user/article", authMiddleware(), func(c *gin.Context) {
 		claimsInterface, exist := c.Get("user")
 		if !exist {
-			c.JSON(403, gin.H{"message": "Token not found",})
+			c.JSON(403, gin.H{"message": "Token not found"})
 			return
 		}
 		claims := claimsInterface.(jwt.MapClaims)
@@ -345,12 +356,11 @@ func (s *Server) handleGetUserInform() {
 			article_ids = append(article_ids, article.ArticleId)
 		}
 		c.JSON(200, gin.H{
-			"item_sum" : len(article_ids),
-			"items": article_ids,
+			"item_sum": len(article_ids),
+			"items":    article_ids,
 		})
 	})
 }
-
 
 func authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {

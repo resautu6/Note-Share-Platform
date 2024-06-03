@@ -215,3 +215,7 @@ func (db *DataBase) getFavouritesByUidAndAid(uid int, aid int) []Favourite {
 	return favourites
 }
 
+func (db * DataBase) deleteFavouriteByAidAndUid(aid int, uid int) {
+	db.db.Delete(&Favourite{}, "article_id = ? AND uid = ?", aid, uid)
+}
+

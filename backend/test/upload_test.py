@@ -6,15 +6,17 @@ user = {
 }
 
 testcase = {
-    "article_title" : "hello world!",
-    "article_content" : "this is a test article",
+    "article_title" : "hello resautu!",
+    "article_content" : "this is a double test article",
     "image_num" : 1,
 }
 
 image_path = ["D:\\document\\web_application_dev\\Note-Share-Platform\\backend\\test\\1241.png", "D:\\document\\web_application_dev\\Note-Share-Platform\\backend\\test\\123.png"]
 
+url = "http://resautu.cn:7879/"
+
 def login():
-    response = requests.post("http://127.0.0.1:8081/login", data=user)
+    response = requests.post(url + "login", data=user)
     if response.status_code == 200:
         return response.json()["token"]
 
@@ -39,7 +41,7 @@ def test():
     }
     files = getFiles()
     testcase["image_num"] = len(files)
-    response = requests.post("http://127.0.0.1:8081/upload_article", data=testcase, headers=headers, files=files)
+    response = requests.post(url + "upload_article", data=testcase, headers=headers, files=files)
     print(response.status_code)
     print(response.json())
 
