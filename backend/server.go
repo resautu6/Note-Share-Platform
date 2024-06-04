@@ -7,21 +7,20 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"sync"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	gin "github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"github.com/hashicorp/golang-lru"
 )
 
 type Server struct {
 	ipaddr         string
 	port           int
 	router         *gin.Engine
-	usersMap       map[string]User
-	usersMapRWLock sync.RWMutex
 
-	articleCache ArticleCache
+	articleCache *lru.Cache
+	userCache *lru.Cache
 }
 
 func (s *Server) registerRouter() {
@@ -31,6 +30,7 @@ func (s *Server) registerRouter() {
 	s.handleGetArticleContent()
 	s.handleUploadArticle()
 	s.handleGetUserInform()
+	s.handleModifyArticle()
 
 }
 
@@ -53,11 +53,25 @@ func (s *Server) registerMiddleware() {
 func (s *Server) start(ipaddr string, port int) {
 	log.Info("Server started")
 	initDb()
+	var err error
+	s.userCache, err = lru.New(5)
+	if err != nil {
+		log.Error("user cache badly init")
+		return
+	}
+
+	s.articleCache, err = lru.New(5)
+	if err != nil {
+		log.Error("article cache badly init")
+		return
+	}
+
+
+	lru.New(5)
 
 	s.ipaddr = ipaddr
 	s.port = port
 	s.router = gin.Default()
-	s.usersMap = make(map[string]User)
 	s.registerMiddleware()
 	s.registerRouter()
 	s.router.Static("/res", "./res")
@@ -82,9 +96,7 @@ func (s *Server) handleLoginPost() {
 			return
 		}
 
-		s.usersMapRWLock.Lock()
-		s.usersMap[user.UName] = user
-		s.usersMapRWLock.Unlock()
+		s.userCache.Add(user.Uid, user)
 
 		jwtToken, _ := generateJWT(user.Uid, user.UName)
 
@@ -147,11 +159,17 @@ func (s *Server) handleUploadArticle() {
 			return
 		}
 		imageList := form.File["image_list"]
+		if len(imageList) != imageNum {
+			c.JSON(403, gin.H{"message": "图片数量不匹配"})
+			db.deleteArticleById(article.ArticleId)
+			return
+		}
 		for idx, file := range imageList {
 			// 读取文件
 			src, err := file.Open()
 			if err != nil {
 				c.String(http.StatusBadRequest, "file open err: %s", err.Error())
+				db.deleteArticleById(article.ArticleId)
 				return
 			}
 			defer src.Close()
@@ -160,6 +178,7 @@ func (s *Server) handleUploadArticle() {
 			fileBytes, err := io.ReadAll(src)
 			if err != nil {
 				c.String(http.StatusBadRequest, "file read err: %s", err.Error())
+				db.deleteArticleById(article.ArticleId)
 				return
 			}
 
@@ -169,9 +188,14 @@ func (s *Server) handleUploadArticle() {
 			err = os.WriteFile(dst, fileBytes, 0644)
 			if err != nil {
 				c.String(http.StatusBadRequest, "file write err: %s", err.Error())
+				db.deleteArticleById(article.ArticleId)
 				return
 			}
 		}
+
+		
+
+		s.articleCache.Add(article.ArticleId, article)
 
 		c.JSON(200, gin.H{
 			"message": "发布成功！",
@@ -202,18 +226,21 @@ func (s *Server) handleGetArticleContent() {
 			c.Status(403)
 			return
 		}
-		if s.articleCache.hasContent(c.Param("id")) {
-			article = s.articleCache.getContent(c.Param("id")).(Article)
+		if s.articleCache.Contains(article_id) {
+			tmp, _ := s.articleCache.Get(article_id)
+			article = tmp.(Article)
 		} else {
 			article = db.getArticleById(article_id)
 		}
 
-		if article.ArticleId == 0 {
+		if article.ArticleId == -1 {
 			c.JSON(403, gin.H{
 				"message": "Article not found!",
 			})
 			return
 		}
+
+		s.articleCache.Add(article_id, article)
 
 		c.JSON(200, gin.H{
 			"id":         article.ArticleId,
@@ -241,19 +268,68 @@ func (s *Server) handleGetArticleContent() {
 	s.router.GET("/article/:id/content", func(c *gin.Context) {
 		var article Article
 		articleID, _ := strconv.Atoi(c.Param("id"))
-		if s.articleCache.hasContent(c.Param("id")) {
-			article = s.articleCache.getContent(c.Param("id")).(Article)
+		if s.articleCache.Contains(articleID) {
+			tmp, _ := s.articleCache.Get(articleID)
+			article = tmp.(Article)
 		} else {
 			article = db.getArticleById(articleID)
 		}
 
+		if article.ArticleId == -1 {
+			c.JSON(403, gin.H{
+				"message": "Article not found!",
+			})
+			return
+		}
+
 		db.updateViewNumByAid(articleID)
+
+		article.ArticleViewNum += 1
+		s.articleCache.Add(articleID, article)
 
 		c.JSON(200, gin.H{
 			"id":         c.Param("id"),
 			"content":    article.ArticleContent,
 			"image_path": article.ArticleImagePath,
 		})
+	})
+}
+
+func (s *Server) handleModifyArticle() {
+	s.router.POST("/article/:id/modify", authMiddleware(), func(c *gin.Context) {
+		claimsInterface, exist := c.Get("user")
+		if !exist {
+			c.JSON(403, gin.H{"message": "Token not found"})
+			return
+		}
+		claims := claimsInterface.(jwt.MapClaims)
+		uid := int(claims["uid"].(float64))
+
+		articleID, _ := strconv.Atoi(c.Param("id"))
+
+		command := c.PostForm("command")
+		if command == "" {
+			c.JSON(403, gin.H{"message": "Command not found"})
+			return
+		}
+
+		if command == "delete" {
+
+			article := db.getArticleById(articleID)
+			if article.ArticleId == -1 || article.ArticleUid != uid {
+				c.JSON(403, gin.H{"message": "Article not found or you are not the author"})
+				return
+			} 
+			db.deleteArticleByAid(articleID)
+
+			if s.articleCache.Contains(articleID) {
+				s.articleCache.Remove(articleID)
+			}
+
+			c.JSON(200, gin.H{"message": "Article deleted successfully"})
+			return
+
+		}
 	})
 }
 
@@ -330,7 +406,13 @@ func (s *Server) handleGetUserInform() {
 
 	s.router.GET("/user/uname/:id", func(c *gin.Context) {
 		uid, _ := strconv.Atoi(c.Param("id"))
-		user := db.getUserById(uid)
+		var user User
+		if s.userCache.Contains(uid) {
+			tmp, _ := s.userCache.Get(uid)
+			user = tmp.(User)
+		} else {
+			user = db.getUserById(uid)
+		}
 
 		if user.Uid != uid {
 			c.JSON(403, gin.H{"message": "User not found"})

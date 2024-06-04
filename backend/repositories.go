@@ -181,8 +181,13 @@ func (db *DataBase) getArticleByTitleAndContent(content string, lmt int) []Artic
 		log.Warn(err)
 	}
 	return articles
-
 }
+
+func (db *DataBase) deleteArticleByAid(aid int) {
+	db.db.Delete(&Article{}, "article_id = ?", aid)
+}
+
+
 
 func (db *DataBase) addFavorite(favourite Favourite) {
 	db.db.Create(&favourite)
