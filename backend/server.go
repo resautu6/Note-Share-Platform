@@ -412,6 +412,7 @@ func (s *Server) handleGetUserInform() {
 			user = tmp.(User)
 		} else {
 			user = db.getUserById(uid)
+			s.userCache.Add(uid, user)
 		}
 
 		if user.Uid != uid {
