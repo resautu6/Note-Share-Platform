@@ -1,7 +1,7 @@
 import requests
 
-url = "http://127.0.0.1:8081/"
-# url = "http://resautu.cn:7879/"
+# url = "http://127.0.0.1:8081/"
+url = "http://resautu.cn:7879/"
 
 user = {
     "name": "xiaoming",
@@ -19,11 +19,11 @@ def random_test():
     print(response.json())
 
 def get_specific_test():
-    response = requests.get(url + "article/14")
+    response = requests.get(url + "article/17")
     print(response.status_code)
     print(response.json())
 
-    response = requests.get(url + "article/14/content")
+    response = requests.get(url + "article/17/content")
     print(response.status_code)
     
 
@@ -68,7 +68,7 @@ def delete_article_test():
 if __name__ == "__main__" :
     # get_user_article_test()
     get_specific_test()
-    delete_article_test()
-    get_specific_test()
+    # delete_article_test()
+    # get_specific_test()
     # random_test()
     # search_artitle()

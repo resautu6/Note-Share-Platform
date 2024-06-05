@@ -249,6 +249,7 @@ func (s *Server) handleGetArticleContent() {
 			"image_num":  article.ArticleImageNum,
 			"image_path": article.ArticleImagePath,
 			"view_num":   article.ArticleViewNum,
+			"modify_time": article.ArticleModifyTime,
 		})
 	})
 
@@ -398,7 +399,12 @@ func (s *Server) handleGetUserInform() {
 		}
 
 		favourite := makeFavourite(uid, article_id)
-		db.addFavorite(favourite)
+		err = db.addFavorite(favourite)
+
+		if err != nil {
+			c.JSON(403, gin.H{"message": "Add favourite failed"})
+			return
+		}
 
 		c.JSON(200, gin.H{"message": "Add favourite success"})
 
