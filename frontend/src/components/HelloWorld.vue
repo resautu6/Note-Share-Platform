@@ -524,7 +524,6 @@ export default {
       token:"",
       password: "",
       acquire: "",
-      isInput: false,
 
       explore: false,
       post: false,
@@ -596,12 +595,6 @@ export default {
         this.searchnote = true;
         this.loadMoreNotes("search");
       }
-    },
-    SetIsInput(){
-      this.isInput = true;
-    },
-    SetIsInput2(){
-      this.isInput  = false;
     },
     BackToSearch(){
       this.display = false;
@@ -711,6 +704,7 @@ export default {
       .then(function(response){
         console.log("note sum: " + response.data.item_sum + " " + response.data.items.length);
         var notesById1;
+        
         
         if(type === "explore") notesById1 = self.notesById;
         else if(type === "home") notesById1 = self.mynotesById;
