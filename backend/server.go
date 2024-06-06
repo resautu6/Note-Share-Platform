@@ -384,7 +384,7 @@ func (s *Server) handleGetUserInform() {
 			c.JSON(403, gin.H{"message": "Command not found"})
 			return
 		}
-
+		
 		article := db.getArticleById(article_id)
 
 		if article.ArticleId == -1 {

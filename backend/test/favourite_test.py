@@ -5,8 +5,8 @@ user = {
     "password": "123"
 }
 
-# url = "http://127.0.0.1:8081/"
-url = "http://resautu.cn:7879/"
+url = "http://127.0.0.1:8081/"
+# url = "http://resautu.cn:7879/"
 
 
 def login():
@@ -14,7 +14,7 @@ def login():
     if response.status_code == 200:
         return response.json()["token"]
     
-article_id = 17
+article_id = 16
 def add_favourite_test():
     token = login()
     headers = {
@@ -69,4 +69,4 @@ if __name__ == "__main__":
     # add_favourite_test()
     # add_repeat_test()
     delete_favourite_test()
-    get_favourite_list()
+    # get_favourite_list()
