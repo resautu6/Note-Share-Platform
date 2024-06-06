@@ -52,8 +52,23 @@ def search_artitle():
     print(response.status_code)
     print(response.json())
 
+def delete_article_test():
+    token = login()
+    headers = {
+        "Authorization": token
+    }
+
+    data = {
+        "command": "delete"
+    }
+    response = requests.post(url + "article/14/modify", data=data, headers=headers)
+    print(response.status_code)
+    print(response.json())
+
 if __name__ == "__main__" :
     # get_user_article_test()
+    get_specific_test()
+    # delete_article_test()
     # get_specific_test()
     # random_test()
-    search_artitle()
+    # search_artitle()
