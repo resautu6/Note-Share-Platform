@@ -117,7 +117,8 @@
             <button @click="searchNote">Search</button>
           </div>
           <div v-for="(note, index) in notesById" :key="index" class="note-div" @click="OpenNote(note)">
-            <img :src="`http://resautu.cn:7879/${note.image_path}/0.png`"  class="note-picture">
+            <img :src="`http://resautu.cn:7879/${note.image_path}/0.png`"  
+            class="note-picture" onerror="this.onerror=null; this.src='default_image_path.jpg'">
             <div class="explore-note-title">
               <p>{{note.title}}</p>
             </div>
@@ -533,7 +534,7 @@ export default {
       displaynote: undefined,
       searchKeyWords:"",
 
-      notesid: [],
+      // notesid: [],
       notesById: {},
       mynotesById: {},
       favornotesById: {},
@@ -655,7 +656,7 @@ export default {
     },
 
     OpenNote(note){
-      this.explore = this.home = this.favor = this.post = false;
+      this.explore = false; this.home = false; this.favor = false; this.post = false;
       this.display = true;
       console.log(note);
       console.log(this.notesId2Images[note.id]);
@@ -677,7 +678,7 @@ export default {
           Authorization: self.token,
         }})
       .then(function(response){
-        console.log("note sum: " + response.data.item_sum);
+        console.log("note sum: " + response.data.item_sum + " " + response.data.items.length);
         var notesById1;
         
         if(type === "explore") notesById1 = self.notesById;
@@ -920,9 +921,12 @@ export default {
       })
     },
     LogOut(){
-      this.login = this.explore = this.home = this.post = this.favor = this.display = this.searchnote = false;
-      this.notesById = this.mynotesById = this.favornotesById = this.searchnotesById = {};
-      this.name = this.uname = this.token = this.password = this.acquire = "";
+      this.login = false; this.explore = false; 
+      this.home = false; this.post = false; this.favor = false;
+      this.display = false; this.searchnote = false;
+      this.notesById = {} ; this.mynotesById = {}; this.favornotesById = {}; this.searchnotesById = {};
+      this.displaynote = {};
+      this.name = ""; this.uname = "";this.token = ""; this.password = ""; this.acquire = "";
       alert("退出登陆成功！");
     },
     Regis:function(){
