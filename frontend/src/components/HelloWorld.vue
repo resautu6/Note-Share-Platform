@@ -656,12 +656,27 @@ export default {
     },
 
     OpenNote(note){
-      this.explore = false; this.home = false; this.favor = false; this.post = false;
-      this.display = true;
+      
       console.log(note);
       console.log(this.notesId2Images[note.id]);
       this.displaynote = note;
       this.displaynote.image_idx = 0;
+      let id = this.displaynote.id;
+      var self = this;
+      axios.get(`http://resautu.cn:7879/article/${id}/content`)
+              .then(function(response){
+                self.displaynote.content = response.data.content;
+                self.displaynote.view_num = response.data.view_num;
+                self.display = true;
+              })
+              .catch(function(error){
+                  self.displaynote.content = "笔记或许已经被删除";
+                  self.displaynote.view_num = -1;
+                  console.log("get note content error " + error);
+                  self.display = true;
+              });
+              this.explore = false; this.home = false; this.favor = false; this.post = false;
+      
     },
 
     loadMoreNotes(type) {
@@ -718,20 +733,20 @@ export default {
                 self.searchnotesById[id].BoxHovered = false;
               }
               self.notesId2Images[id] = [];
-              axios.get(`http://resautu.cn:7879/article/${id}/content`)
-              .then(function(response){
-                if(type === "explore")
-                  self.notesById[id].content = response.data.content;
-                if(type === "home")
-                  self.mynotesById[id].content = response.data.content;
-                if(type === "favor")
-                  self.favornotesById[id].content = response.data.content;
-                if(type === "search")
-                  self.searchnotesById[id].content = response.data.content;
-              })
-              .catch(function(error){
-                  console.log("get note content error " + error);
-              });
+              // axios.get(`http://resautu.cn:7879/article/${id}/content`)
+              // .then(function(response){
+              //   if(type === "explore")
+              //     self.notesById[id].content = response.data.content;
+              //   if(type === "home")
+              //     self.mynotesById[id].content = response.data.content;
+              //   if(type === "favor")
+              //     self.favornotesById[id].content = response.data.content;
+              //   if(type === "search")
+              //     self.searchnotesById[id].content = response.data.content;
+              // })
+              // .catch(function(error){
+              //     console.log("get note content error " + error);
+              // });
               var name;
               if(type === "explore")
                 name = self.notesById[id].uname;
