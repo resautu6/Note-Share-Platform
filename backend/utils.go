@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"time"
+	"strconv"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
@@ -57,4 +58,13 @@ func generateJWT(uid int, username string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func getStringHash(title string) string {
+	ret := uint64(1)
+	byteArray := []byte(title)
+	for _, b := range byteArray {
+		ret = ret * 13331 + uint64(b)
+	}
+	return strconv.FormatUint(ret, 16)
 }

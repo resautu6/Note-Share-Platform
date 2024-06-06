@@ -1,0 +1,4 @@
+res/*
+test/*.png
+*.exe
+.vscode
