@@ -113,8 +113,8 @@
 
         <div class="main-div" v-if="explore">
           <div class="search-box">
-            <input type="text" placeholder="搜索笔记" v-model="searchKeyWords">
-            <button @click="searchNote">Search</button>
+            <input type="text" placeholder="搜索笔记" v-model="searchKeyWords" @keydown.enter="searchNote">
+            <button @click="searchNote" >Search</button>
           </div>
           <div v-for="(note, index) in notesById" :key="index" class="note-div" @click="OpenNote(note)">
             <img :src="`http://resautu.cn:7879/${note.image_path}/0.png`"  
@@ -511,7 +511,7 @@
 
 <script>
 import axios from 'axios';
-//import { search } from 'core-js/fn/symbol';
+
 import querystring from 'querystring'
 export default {
   name: 'HelloWorld',
@@ -524,6 +524,7 @@ export default {
       token:"",
       password: "",
       acquire: "",
+      isInput: false,
 
       explore: false,
       post: false,
@@ -586,6 +587,21 @@ export default {
       this.explore = false;
       this.searchnote = true;
       this.loadMoreNotes("search");
+    },
+    searchNoteByEnter(){
+      console.log("keydown enter");
+      if(this.isInput === true)
+      {
+        this.explore = false;
+        this.searchnote = true;
+        this.loadMoreNotes("search");
+      }
+    },
+    SetIsInput(){
+      this.isInput = true;
+    },
+    SetIsInput2(){
+      this.isInput  = false;
     },
     BackToSearch(){
       this.display = false;
@@ -942,6 +958,7 @@ export default {
       this.notesById = {} ; this.mynotesById = {}; this.favornotesById = {}; this.searchnotesById = {};
       this.displaynote = {};
       this.name = ""; this.uname = "";this.token = ""; this.password = ""; this.acquire = "";
+      this.postText = ""; this.postTitle = "";
       alert("退出登陆成功！");
     },
     Regis:function(){
