@@ -41,12 +41,14 @@
           <button @click="Register">Register</button>
     </div>
     <div class="container" v-else-if="login">
+      <input type="text" @keyup.F5="LogOut" style="display: none;">
       <div class="navigation-div" >
         <ul>
           <li><button @click="ToExplore">发现</button></li>
           <li><button @click="ToPost">发布</button></li>
           <li><button @click="ToHome">我</button></li>
           <li><button @click="ToFavor">收藏</button></li>
+          <li v-if="!(display&&searchnote)"><button v-if="!(display&&searchnote)" @click="LogOut">退出登陆</button></li>
           <li v-if="post"><button @click="addImageBox" v-if="post">上传图片</button></li>
           <li v-if="post"><button @click="UploadArticle" v-if="post">发布</button></li>
           <li v-if="display&&!(displaynote.id in favornotesById)">
@@ -167,8 +169,8 @@
           <div class="noteImgDiv" @mouseover="enterNoteImg" @mouseleave="leaveNoteImg">
             <img v-if="displaynote.invalid" class="noteImage" :src="`http://resautu.cn:7879/res/img404.png`">
             <img v-else class="noteImage" :src="`http://resautu.cn:7879/${displaynote.image_path}/${displaynote.image_idx}.png`">
-            <button v-show="isButtonVisible" style="left:5%" @click="leftImg">&lt;</button>
-            <button v-show="isButtonVisible" style="right: 5%;" @click="rightImg">&gt;</button>
+            <button v-if="isButtonVisible" style="left:5%" @click="leftImg">&lt;</button>
+            <button v-if="isButtonVisible" style="right: 5%;" @click="rightImg">&gt;</button>
           </div>
           
         </div>
@@ -192,9 +194,12 @@
         justify-content: center;
         align-items: center;
         /* height: 100%; */
+        /* background-image: url('2_low0.3.svg');
+        background-repeat: no-repeat;
+        background-size: cover; */
     }
     .login-container {
-        background-color: #fff;
+        /* background-color: #fff; */
         border-radius: 8px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         padding: 20px;
@@ -332,7 +337,7 @@
     border: 1px solid #ccc;
     padding: 10px;
     border-radius: 5px;
-    background-color: white;
+    /* background-color: white; */
   }
 
   .search-box input[type="text"] {
@@ -341,6 +346,7 @@
     outline: none;
     padding: 5px;
     font-size: 35px;
+    background-color: transparent;
   }
 
   .search-box button {
@@ -359,7 +365,7 @@
     .navigation-div{
       width: 200px; /* 设置导航栏的宽度 */
       height: 100%;
-      background-color: white;
+      /* background-color: white; */
       float: left; /* 将导航栏浮动到最左边 */
       position:fixed;
     }
@@ -375,7 +381,7 @@
     .navigation-div ul li button{
         width: 100%;
         padding: 20px;
-        background-color: white;
+        background-color: transparent;
         color: black;
         border: none;
         border-radius: 4px;
@@ -405,7 +411,7 @@
     .explore-note-picture{
       width: 95%;
       height: clac(100% - 300px);
-      background-color: green;
+      /* background-color: green; */
       margin-top: 2%;
     }
     
@@ -460,14 +466,14 @@
     .container {
             width: 100%;
             height: 100%; /* 设置div的高度为整个区域的高度 */
-            background-color: white; /* 设置div的背景颜色 */
+            /* background-color: white; 设置div的背景颜色 */
         }
         .note {
             margin-bottom: 20px;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            background-color: #f9f9f9;
+            /* background-color: #f9f9f9; */
         }
         .note h2 {
             margin-top: 0;
@@ -719,6 +725,8 @@ export default {
                   self.mynotesById[id].content = response.data.content;
                 if(type === "favor")
                   self.favornotesById[id].content = response.data.content;
+                if(type === "search")
+                  self.searchnotesById[id].content = response.data.content;
               })
               .catch(function(error){
                   console.log("get note content error " + error);
@@ -778,17 +786,23 @@ export default {
       ;
     },
     handleScroll() {
-      // 检查是否滚动到了页面底部
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
-        // 加载新的数据
-        var type = "";
+    const documentHeight = document.documentElement.scrollHeight;
+    const currentScroll = window.scrollY || window.pageYOffset;
+    const windowHeight = window.innerHeight;
+    
+
+    if (documentHeight - currentScroll <= windowHeight + 1) {
+      var type = "";
         if(this.explore) type = "explore";
         else if(this.home) type = "home";
         else if(this.favor) type = "favor";
         else if(this.searchnote) type = "search";
         else return;
         this.loadMoreNotes(type);
-      }
+    }
+      // if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+        
+      // }
     },
     addImageBox() {
       if(this.images.length < 3){
@@ -904,6 +918,12 @@ export default {
           alert(error.response.data.message);
         console.log("LogIn error " + error);
       })
+    },
+    LogOut(){
+      this.login = this.explore = this.home = this.post = this.favor = this.display = this.searchnote = false;
+      this.notesById = this.mynotesById = this.favornotesById = this.searchnotesById = {};
+      this.name = this.uname = this.token = this.password = this.acquire = "";
+      alert("退出登陆成功！");
     },
     Regis:function(){
       this.register = true;
