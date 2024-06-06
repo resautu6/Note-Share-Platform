@@ -375,7 +375,9 @@ func (s *Server) handleGetUserInform() {
 			c.JSON(403, gin.H{"message": "Wrong article id"})
 			return
 		}
-
+        
+        // log.Info(command)
+        
 		if command == "delete" {
 			db.deleteFavouriteByAidAndUid(article_id, uid)
 			c.JSON(200, gin.H{"message": "Delete favourite success"})
@@ -384,7 +386,7 @@ func (s *Server) handleGetUserInform() {
 			c.JSON(403, gin.H{"message": "Command not found"})
 			return
 		}
-		
+
 		article := db.getArticleById(article_id)
 
 		if article.ArticleId == -1 {
