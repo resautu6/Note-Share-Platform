@@ -10,17 +10,17 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	gin "github.com/gin-gonic/gin"
-	"github.com/hashicorp/golang-lru"
 	log "github.com/sirupsen/logrus"
+	"github.com/hashicorp/golang-lru"
 )
 
 type Server struct {
-	ipaddr string
-	port   int
-	router *gin.Engine
+	ipaddr         string
+	port           int
+	router         *gin.Engine
 
 	articleCache *lru.Cache
-	userCache    *lru.Cache
+	userCache *lru.Cache
 }
 
 func (s *Server) registerRouter() {
@@ -65,6 +65,7 @@ func (s *Server) start(ipaddr string, port int) {
 		log.Error("article cache badly init")
 		return
 	}
+
 
 	lru.New(5)
 
@@ -192,6 +193,8 @@ func (s *Server) handleUploadArticle() {
 			}
 		}
 
+		
+
 		s.articleCache.Add(article.ArticleId, article)
 
 		c.JSON(200, gin.H{
@@ -240,12 +243,12 @@ func (s *Server) handleGetArticleContent() {
 		s.articleCache.Add(article_id, article)
 
 		c.JSON(200, gin.H{
-			"id":          article.ArticleId,
-			"title":       article.ArticleTitle,
-			"uname":       article.ArticleUid,
-			"image_num":   article.ArticleImageNum,
-			"image_path":  article.ArticleImagePath,
-			"view_num":    article.ArticleViewNum,
+			"id":         article.ArticleId,
+			"title":      article.ArticleTitle,
+			"uname":      article.ArticleUid,
+			"image_num":  article.ArticleImageNum,
+			"image_path": article.ArticleImagePath,
+			"view_num":   article.ArticleViewNum,
 			"modify_time": article.ArticleModifyTime,
 		})
 	})
@@ -317,7 +320,7 @@ func (s *Server) handleModifyArticle() {
 			if article.ArticleId == -1 || article.ArticleUid != uid {
 				c.JSON(403, gin.H{"message": "Article not found or you are not the author"})
 				return
-			}
+			} 
 			db.deleteArticleByAid(articleID)
 
 			if s.articleCache.Contains(articleID) {
