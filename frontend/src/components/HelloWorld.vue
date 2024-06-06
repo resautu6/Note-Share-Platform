@@ -58,6 +58,9 @@
           <li v-if="display&&(displaynote.id in mynotesById)">
             <button @click="deleteNote" v-if="display&&(displaynote.id in mynotesById)">删除笔记</button>
           </li>
+          <li v-if="display&&searchnote">
+            <button @click="BackToSearch" v-if="display&&searchnote">返回搜索</button>
+          </li>
         </ul>
         </div>
 
@@ -107,6 +110,10 @@
         </div>
 
         <div class="main-div" v-if="explore">
+          <div class="search-box">
+            <input type="text" placeholder="搜索笔记" v-model="searchKeyWords">
+            <button @click="searchNote">Search</button>
+          </div>
           <div v-for="(note, index) in notesById" :key="index" class="note-div" @click="OpenNote(note)">
             <img :src="`http://resautu.cn:7879/${note.image_path}/0.png`"  class="note-picture">
             <div class="explore-note-title">
@@ -126,6 +133,15 @@
         
         <div class="main-div" v-if="favor">
           <div v-for="(note, index) in favornotesById" :key="index" class="note-div" @click="OpenNote(note)">
+            <img v-if="note.invalid"  class="note-picture" src="http://resautu.cn:7879/res/img404.png">
+            <img v-else :src="`http://resautu.cn:7879/${note.image_path}/0.png`"  class="note-picture">
+            <div class="explore-note-title">
+              <p>{{note.title}}</p>
+            </div>
+          </div>
+        </div>
+        <div class="main-div" v-if="searchnote&&!display">
+          <div v-for="(note, index) in searchnotesById" :key="index" class="note-div" @click="OpenNote(note)">
             <img :src="`http://resautu.cn:7879/${note.image_path}/0.png`"  class="note-picture">
             <div class="explore-note-title">
               <p>{{note.title}}</p>
@@ -140,11 +156,17 @@
             <p style="font-size: 20px; margin: 20px;">发布时间：{{displaynote.modify_time}}</p>
             <p style="font-size: 20px; margin: 20px;">浏览量：{{displaynote.view_num}}</p>
             <h2 style="font-size: 60px; margin: 20px;">{{displaynote.title}}</h2>
-            <p style="font-size: 30px; margin: 20px;">{{displaynote.content}}</p>
+            <p
+              v-for="(line, index) in lines()"
+              :key="index"
+              style="font-size: 30px; margin: 20px; white-space: pre-wrap;"
+            >{{ "    " + line }} </p>
+      
           </div>
 
           <div class="noteImgDiv" @mouseover="enterNoteImg" @mouseleave="leaveNoteImg">
-            <img class="noteImage" :src="`http://resautu.cn:7879/${displaynote.image_path}/${displaynote.image_idx}.png`">
+            <img v-if="displaynote.invalid" class="noteImage" :src="`http://resautu.cn:7879/res/img404.png`">
+            <img v-else class="noteImage" :src="`http://resautu.cn:7879/${displaynote.image_path}/${displaynote.image_idx}.png`">
             <button v-show="isButtonVisible" style="left:5%" @click="leftImg">&lt;</button>
             <button v-show="isButtonVisible" style="right: 5%;" @click="rightImg">&gt;</button>
           </div>
@@ -233,8 +255,8 @@
     .noteImgDiv{
       width: 50vw;
       height: 40vw;
-      position: relative;
-      float: right;
+      position: fixed;
+      left: 50%;
       /* background-color: green; */
     }
     .noteImgDiv button{
@@ -299,6 +321,41 @@
       overflow: hidden; /* 隐藏超出div的文本 */
       text-overflow: ellipsis; /* 文本超出部分显示省略号 */
     }
+
+    .search-box {
+    width: 70%;
+    height : 50px;
+    z-index: 2;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: white;
+  }
+
+  .search-box input[type="text"] {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    padding: 5px;
+    font-size: 35px;
+  }
+
+  .search-box button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 35px;
+  }
+
+  .search-box button:hover {
+    background-color: #0056b3;
+  }
     .navigation-div{
       width: 200px; /* 设置导航栏的宽度 */
       height: 100%;
@@ -447,6 +504,7 @@
 
 <script>
 import axios from 'axios';
+//import { search } from 'core-js/fn/symbol';
 import querystring from 'querystring'
 export default {
   name: 'HelloWorld',
@@ -465,12 +523,15 @@ export default {
       home: false,
       favor: false,
       display: false,
+      searchnote: false,
       displaynote: undefined,
+      searchKeyWords:"",
 
       notesid: [],
       notesById: {},
       mynotesById: {},
       favornotesById: {},
+      searchnotesById: {},
       notesId2Images: {},
       //notesnum: 0,
       noteBoxHovered: [], //用于跟踪笔记是否被鼠标悬停
@@ -495,6 +556,10 @@ export default {
     window.addEventListener('scroll', this.handleScroll);
   },
   methods:{
+    lines() {
+      // 将内容按换行符分割成数组
+      return this.displaynote.content.split('\n');
+    },
     enterNoteImg(){
       this.isButtonVisible = true;
     },
@@ -509,6 +574,14 @@ export default {
     rightImg(){
       this.displaynote.image_idx = (this.displaynote.image_idx + 1)%this.displaynote.image_num;
       console.log(this.displaynote.image_idx);
+    },
+    searchNote(){
+      this.explore = false;
+      this.searchnote = true;
+      this.loadMoreNotes("search");
+    },
+    BackToSearch(){
+      this.display = false;
     },
     favourites(){
       var self = this;
@@ -564,6 +637,7 @@ export default {
           delete self.notesById[id];
           delete self.mynotesById[id];
           delete self.favornotesById[id];
+          delete self.searchnotesById[id];
           self.ToHome();
         }
       })
@@ -585,11 +659,13 @@ export default {
 
     loadMoreNotes(type) {
       // 这里应该是获取初始数据的逻辑
+      console.log("type:" + type);
       var self = this;
       var URL1;
       if(type === "explore") URL1 = "http://resautu.cn:7879/article/list";
       if(type === "home") URL1 = "http://resautu.cn:7879/user/article";
       if(type === "favor") URL1 = "http://resautu.cn:7879/user/favourites";
+      if(type === "search") URL1 = `http://resautu.cn:7879/search/article/${this.searchKeyWords}`;
       console.log("URL1:" + URL1);
       axios.get(URL1,{headers :{
           Authorization: self.token,
@@ -601,6 +677,9 @@ export default {
         if(type === "explore") notesById1 = self.notesById;
         else if(type === "home") notesById1 = self.mynotesById;
         else if(type === "favor") notesById1 = self.favornotesById;
+        else if(type === "search"){
+          notesById1 = self.searchnotesById;
+        }
         else {
           console.log("loadMoreNotes type error");
           return;
@@ -608,7 +687,7 @@ export default {
         for(let i = 0; i < response.data.items.length; i++){
 
           if(!(response.data.items[i] in notesById1)){
-            
+            console.log("i:" + response.data.items[i]);
             let id = response.data.items[i];
             //self.notesid.push(id);
             axios.get(`http://resautu.cn:7879/article/${id}`)
@@ -627,6 +706,10 @@ export default {
                 self.favornotesById[id] = response.data;
                 self.favornotesById[id].BoxHovered = false;
               }
+              if(type === "search"){
+                self.searchnotesById[id] = response.data;
+                self.searchnotesById[id].BoxHovered = false;
+              }
               self.notesId2Images[id] = [];
               axios.get(`http://resautu.cn:7879/article/${id}/content`)
               .then(function(response){
@@ -638,7 +721,7 @@ export default {
                   self.favornotesById[id].content = response.data.content;
               })
               .catch(function(error){
-                console.log("get note content error " + error);
+                  console.log("get note content error " + error);
               });
               var name;
               if(type === "explore")
@@ -647,6 +730,8 @@ export default {
                 name = self.mynotesById[id].uname;
               if(type === "favor")
                 name = self.favornotesById[id].uname;
+              if(type === "search")
+                name = self.searchnotesById[id].uname;
               console.log("name:" + name);
               axios.get(`http://resautu.cn:7879/user/uname/${name}`)
               .then(function(response){
@@ -656,6 +741,8 @@ export default {
                   self.mynotesById[id].name = response.data.uname;
                 if(type === "favor")
                   self.favornotesById[id].name = response.data.uname;
+                if(type === "search")
+                  self.searchnotesById[id].name = response.data.uname;
               })
               .catch(function(error){
                 alert("get user name error");
@@ -664,8 +751,20 @@ export default {
 
             })
             .catch(function(error){
-              alert("读取笔记id出错"); 
-              console.log("get note id error " + error);
+              if(type !== "favor"){
+                alert("读取笔记id出错"); 
+                console.log("get note id error " + error.response.data.message);
+              }
+              else{
+                self.favornotesById[id] = {};
+                self.favornotesById[id].id = id;
+                self.favornotesById[id].title = "找不到笔记";
+                self.favornotesById[id].invalid = true;
+                self.favornotesById[id].content = "";
+                self.favornotesById[id].view_num = "";
+                self.favornotesById[id].name = "";
+                self.favornotesById[id].modify_time  = "";
+              }
             });
           }
         }
@@ -686,6 +785,7 @@ export default {
         if(this.explore) type = "explore";
         else if(this.home) type = "home";
         else if(this.favor) type = "favor";
+        else if(this.searchnote) type = "search";
         else return;
         this.loadMoreNotes(type);
       }
@@ -837,9 +937,11 @@ export default {
       this.post = false;
       this.favor = false;
       this.display = false;
+      this.searchnote = false;
       this.loadMoreNotes("explore");
       this.loadMoreNotes("home");
       this.loadMoreNotes("favor");
+      this.searchnotesById = {};
     },
     ToPost:function(){
       this.explore = false;
@@ -847,6 +949,7 @@ export default {
       this.post = true;
       this.favor = false;
       this.display = false;
+      this.searchnote = false;
     },
     ToHome:function(){
       this.explore = false;
@@ -854,6 +957,7 @@ export default {
       this.post = false;
       this.favor = false;
       this.display = false;
+      this.searchnote = false;
       this.loadMoreNotes("home");
       this.loadMoreNotes("explore");
       this.loadMoreNotes("favor");
@@ -863,6 +967,7 @@ export default {
       this.post = false;
       this.home = false;
       this.favor = true;
+      this.searchnote = false;
       this.display = false;
       this.loadMoreNotes("favor");
       this.loadMoreNotes("home");
