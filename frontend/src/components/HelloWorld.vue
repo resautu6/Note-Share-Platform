@@ -50,7 +50,7 @@
           <li><button @click="ToFavor">收藏</button></li>
           <li v-if="!(display&&searchnote)"><button v-if="!(display&&searchnote)" @click="LogOut">退出登陆</button></li>
           <li v-if="post"><button @click="addImageBox" v-if="post">上传图片</button></li>
-          <li v-if="post"><button @click="UploadArticle" v-if="post">发布</button></li>
+          <li v-if="post"><button @click="UploadArticle" v-if="post">发布笔记</button></li>
           <li v-if="display&&!(displaynote.id in favornotesById)">
             <button @click="favourites" v-if="display&&!(displaynote.id in favornotesById)">收藏笔记</button>
           </li>

@@ -288,6 +288,7 @@ func (s *Server) handleGetArticleContent() {
 		c.JSON(200, gin.H{
 			"id":         c.Param("id"),
 			"content":    article.ArticleContent,
+			"view_num":   article.ArticleViewNum,
 			"image_path": article.ArticleImagePath,
 		})
 	})
